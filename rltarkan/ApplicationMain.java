@@ -11,7 +11,9 @@ public class ApplicationMain extends JFrame {
     public ApplicationMain(){
         super();
         terminal = new AsciiPanel();
-        terminal.write("rl tutorial", 1, 1);
+        terminal.write("The first parameter is how many characters", 10, 0);
+        terminal.write("in the horizontal direction", 10, 1);
+        terminal.write("And the second is how many characters in the vertical direction", 0, 10);
         add(terminal);
         pack();
     }
