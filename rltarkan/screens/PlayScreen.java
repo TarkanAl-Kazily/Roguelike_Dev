@@ -2,18 +2,15 @@ package rltarkan.screens;
 
 import asciiPanel.AsciiPanel;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import rltarkan.Creature;
+import rltarkan.CreatureFactory;
 import rltarkan.World;
 import rltarkan.WorldBuilder;
-import rltarkan.CreatureFactory;
 
 public class PlayScreen implements Screen {
 
     private World world; // World file (randomly generated in createWorld)
-    /* Code without player
-    private int centerX; // The X location we are looking at (player location)
-    private int centerY; // The Y location we are looking at (player location)
-    */
     private Creature player;
     private int screenWidth;
     private int screenHeight;
@@ -23,8 +20,9 @@ public class PlayScreen implements Screen {
         screenWidth = 80;
         screenHeight = 21;
         createWorld();
+
         CreatureFactory creatureFactory = new CreatureFactory(world);
-        player = creatureFactory.newPlayer();
+        createCreatures(creatureFactory);
     }
 
     private void createWorld()
@@ -35,49 +33,14 @@ public class PlayScreen implements Screen {
         world = new WorldBuilder(90, 31).makeCaves().build();
     }
 
-    /* Code without player
-    public void displayOutput(AsciiPanel terminal)
+    private void createCreatures(CreatureFactory creatureFactory)
     {
-        int left = getScrollX();
-        int top = getScrollY();
-        displayTiles(terminal, left, top);
-        terminal.write('X', centerX - left, centerY - top);
-        terminal.writeCenter("-- press [escape] to lose or [enter] to win --", 22);
-    }
-
-    public Screen respondToUserInput(KeyEvent key)
-    {
-        switch (key.getKeyCode())
+        for (int i = 0; i < 18; i++)
         {
-            case KeyEvent.VK_ESCAPE: return new LoseScreen();
-            case KeyEvent.VK_ENTER: return new WinScreen();
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_H: scrollBy(-1, 0); break;
-            case KeyEvent.VK_RIGHT:
-            case KeyEvent.VK_L: scrollBy( 1, 0); break;
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_K: scrollBy( 0,-1); break;
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_J: scrollBy( 0, 1); break;
-            case KeyEvent.VK_Y: scrollBy(-1,-1); break;
-            case KeyEvent.VK_U: scrollBy( 1,-1); break;
-            case KeyEvent.VK_B: scrollBy(-1, 1); break;
-            case KeyEvent.VK_N: scrollBy( 1, 1); break;
+            creatureFactory.newFungus();
         }
-
-        return this;
+        player = creatureFactory.newPlayer();
     }
-
-    public int getScrollX()
-    {
-        return Math.max(0, Math.min(centerX - screenWidth / 2, world.width() - screenWidth));
-    }
-
-    public int getScrollY()
-    {
-        return Math.max(0, Math.min(centerY - screenHeight / 2, world.height() - screenHeight));
-    }
-    */
 
     // Displays tiles
     // @param left is the tile
@@ -93,21 +56,20 @@ public class PlayScreen implements Screen {
                 terminal.write(world.glyph(wx, wy), x, y, world.color(wx, wy));
             }
         }
+        for (Creature c : world.creatures())
+        {
+            if (c.x >= left && c.x < left + screenWidth && c.y >= top && c.y < top + screenHeight)
+            {
+                terminal.write(c.glyph(), c.x - left, c.y - top, c.color());
+            }
+        }
     }
-
-    /* Code without player
-    private void scrollBy(int mx, int my){
-        player.x = Math.max(0, Math.min(centerX + mx, world.width() - 1));
-        centerY = Math.max(0, Math.min(centerY + my, world.height() - 1));
-    }
-    */
 
     public void displayOutput(AsciiPanel terminal)
     {
         int left = getScrollX();
         int top = getScrollY();
         displayTiles(terminal, left, top);
-        terminal.write(player.glyph(), player.x - left, player.y - top, player.color());
         terminal.writeCenter("-- press [escape] to lose or [enter] to win --", 22);
     }
 
@@ -130,7 +92,7 @@ public class PlayScreen implements Screen {
             case KeyEvent.VK_B: player.moveBy(-1, 1); break;
             case KeyEvent.VK_N: player.moveBy( 1, 1); break;
         }
-
+        world.update();
         return this;
     }
 
