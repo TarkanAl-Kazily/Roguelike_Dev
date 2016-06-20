@@ -20,11 +20,32 @@ public class Creature
     private Color color;
     public Color color() { return color; }
 
+    private int maxHp;
+    public int maxHp() { return maxHp; }
+
+    private int hp;
+    public int hp() { return hp; }
+
+    private int attackValue;
+    public int attackValue() { return attackValue; }
+
+    private int defenseValue;
+    public int defenseValue() { return defenseValue; }
+
     public Creature(World world, char glyph, Color color)
+    {
+        this(world, glyph, color, 1, 0, 0);
+    }
+
+    public Creature(World world, char glyph, Color color, int maxHp, int attack, int defense)
     {
         this.world = world;
         this.glyph = glyph;
         this.color = color;
+        this.maxHp = maxHp;
+        this.hp = maxHp;
+        this.attackValue = attack;
+        this.defenseValue = defense;
     }
 
     // The CreatureAi gives each creature its set of behavoirs and traits
@@ -45,12 +66,35 @@ public class Creature
         if (other == null)
             ai.onEnter(x + mx, y + my, world.tile(x + mx, y + my));
         else
+        {
             attack(other);
+            // If the creature is still alive, it hits back
+            if (world.creatures().contains(other))
+            {
+                other.attack(this);
+            }
+        }
     }
 
     public void attack(Creature other)
     {
-        world.remove(other);
+        int amount = Math.max(0, attackValue() - other.defenseValue());
+
+        amount = (int) (Math.random() * amount) + 1;
+
+        other.modifyHp(-amount);
+    }
+
+    public void modifyHp(int amount)
+    {
+        hp += amount;
+
+        if (dead()) world.remove(this);
+    }
+
+    public boolean dead()
+    {
+        return hp < 1;
     }
 
     public void update()

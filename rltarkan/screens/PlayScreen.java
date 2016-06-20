@@ -35,7 +35,7 @@ public class PlayScreen implements Screen {
 
     private void createCreatures(CreatureFactory creatureFactory)
     {
-        for (int i = 0; i < 18; i++)
+        for (int i = 0; i < 8; i++)
         {
             creatureFactory.newFungus();
         }
@@ -70,6 +70,8 @@ public class PlayScreen implements Screen {
         int left = getScrollX();
         int top = getScrollY();
         displayTiles(terminal, left, top);
+        String stats = String.format(" %2d/%3d hp", player.hp(), player.maxHp());
+        terminal.write(stats, 1, 23);
         terminal.writeCenter("-- press [escape] to lose or [enter] to win --", 22);
     }
 
@@ -93,6 +95,7 @@ public class PlayScreen implements Screen {
             case KeyEvent.VK_N: player.moveBy( 1, 1); break;
         }
         world.update();
+        if (player.dead()) return new LoseScreen();
         return this;
     }
 
