@@ -7,6 +7,7 @@ import java.awt.Color;
 
 public class Creature
 {
+    public static final int NOTIFICATION_RADIUS = 9;
     // We want the creature to be able to reference the world it is in
     private World world;
 
@@ -64,11 +65,12 @@ public class Creature
         Creature other = world.creature(x + mx, y + my);
 
         if (other == null)
-            ai.onEnter(x + mx, y + my, world.tile(x + mx, y + my));
+        ai.onEnter(x + mx, y + my, world.tile(x + mx, y + my));
         else
         {
             attack(other);
             // If the creature is still alive, it hits back
+            // TODO remove and add attack functionality to other creature's update methods
             if (world.creatures().contains(other))
             {
                 other.attack(this);
@@ -81,15 +83,21 @@ public class Creature
         int amount = Math.max(0, attackValue() - other.defenseValue());
 
         amount = (int) (Math.random() * amount) + 1;
+        doAction("attack the '%s' for %d damage", other.glyph, amount);
 
         other.modifyHp(-amount);
+
     }
 
     public void modifyHp(int amount)
     {
         hp += amount;
 
-        if (dead()) world.remove(this);
+        if (dead())
+        {
+            doAction("die");
+            world.remove(this);
+        }
     }
 
     public boolean dead()
@@ -105,5 +113,47 @@ public class Creature
     public boolean canEnter(int wx, int wy)
     {
         return world.tile(wx, wy).isGround() && world.creature(wx, wy) == null;
+    }
+
+    public void notify(String message, Object ... params)
+    {
+        ai.onNotify(String.format(message, params));
+    }
+
+    public void doAction(String message, Object ... params)
+    {
+        int r = NOTIFICATION_RADIUS;
+        for (int ox = -r; ox < r+1; ox++)
+        {
+            for (int oy = -r; oy < r+1; oy++)
+            {
+                if (ox*ox + oy*oy > r*r)
+                continue;
+
+                Creature other = world.creature(x + ox, y + oy);
+
+                if (other == null)
+                continue;
+
+                if (other == this)
+                    other.notify("You " + message + ".", params);
+                else
+                    other.notify(String.format("The '%s' %s.", glyph, makeSecondPerson(message)), params);
+            }
+        }
+    }
+
+    public String makeSecondPerson(String text)
+    {
+        String[] words = text.split(" ");
+        words[0] = words[0] + "s";
+
+        StringBuilder builder = new StringBuilder();
+        for (String word : words){
+            builder.append(" ");
+            builder.append(word);
+        }
+
+        return builder.toString().trim();
     }
 }

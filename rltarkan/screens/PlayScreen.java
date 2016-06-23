@@ -2,6 +2,7 @@ package rltarkan.screens;
 
 import asciiPanel.AsciiPanel;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import rltarkan.Creature;
 import rltarkan.CreatureFactory;
@@ -14,12 +15,16 @@ public class PlayScreen implements Screen {
     private Creature player;
     private int screenWidth;
     private int screenHeight;
+    private List<String> messages;
+    private List<String> messageLog;
 
     public PlayScreen()
     {
         screenWidth = 80;
         screenHeight = 21;
         createWorld();
+        messages = new ArrayList<String>();
+        messageLog = new ArrayList<String>();
 
         CreatureFactory creatureFactory = new CreatureFactory(world);
         createCreatures(creatureFactory);
@@ -39,7 +44,7 @@ public class PlayScreen implements Screen {
         {
             creatureFactory.newFungus();
         }
-        player = creatureFactory.newPlayer();
+        player = creatureFactory.newPlayer(messages);
     }
 
     // Displays tiles
@@ -69,10 +74,25 @@ public class PlayScreen implements Screen {
     {
         int left = getScrollX();
         int top = getScrollY();
+
         displayTiles(terminal, left, top);
-        String stats = String.format(" %2d/%3d hp", player.hp(), player.maxHp());
-        terminal.write(stats, 1, 23);
+        displayMessages(terminal, messages);
+
         terminal.writeCenter("-- press [escape] to lose or [enter] to win --", 22);
+
+        String stats = String.format(" %3d/%3d hp", player.hp(), player.maxHp());
+        terminal.write(stats, 1, 23);
+    }
+
+    private void displayMessages(AsciiPanel terminal, List<String> messages)
+    {
+        int top = screenHeight - messages.size();
+        for (int i = 0; i < messages.size(); i++)
+        {
+            terminal.writeCenter(messages.get(i), top + i);
+            messageLog.add(messages.get(i));
+        }
+        messages.clear();
     }
 
     public Screen respondToUserInput(KeyEvent key)
@@ -93,6 +113,7 @@ public class PlayScreen implements Screen {
             case KeyEvent.VK_U: player.moveBy( 1,-1); break;
             case KeyEvent.VK_B: player.moveBy(-1, 1); break;
             case KeyEvent.VK_N: player.moveBy( 1, 1); break;
+            case KeyEvent.VK_M: return new MessageScreen(messageLog, this);
         }
         world.update();
         if (player.dead()) return new LoseScreen();
